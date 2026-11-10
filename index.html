@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="3.0"><meta name="app-critical" content="0"><meta name="app-note" content="ملاءمة حجم أرقام البطاقات الرئيسية لمساحتها">
+<meta name="app-version" content="3.1"><meta name="app-critical" content="0"><meta name="app-note" content="علامتا م وهـ على يسار التاريخ وضبط الأرقام">
 <title>برج السمو للنقليات</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -44,7 +44,7 @@ header{flex-wrap:wrap}
 .clk .r1 b{font-size:.95rem;color:#fde68a;font-weight:700}
 .clk .ct{direction:ltr;font-family:Orbitron,"Segoe UI",monospace;font-weight:700;font-size:.95rem;color:#e0f2fe;text-shadow:0 0 6px rgba(125,211,252,.7);white-space:nowrap}
 .clk .ct small{unicode-bidi:isolate;display:inline;opacity:1;font-size:1.05rem;font-weight:700;margin-inline-end:6px;color:#fde68a;font-family:"Reem Kufi",sans-serif;text-shadow:none}
-.clk .r2{font-size:.74rem;color:#e0f2fe;white-space:nowrap}.clk .r2 i{font-style:normal;color:#7dd3fc;margin:0 2px}.clk .r2 u{text-decoration:none;color:#7dd3fc;margin:0 5px}
+.clk .r2{font-size:.74rem;color:#e0f2fe;white-space:nowrap}.clk .r2 s{text-decoration:none;unicode-bidi:isolate}.clk .r2 i{unicode-bidi:isolate;font-style:normal;color:#7dd3fc;margin:0 2px}.clk .r2 u{text-decoration:none;color:#7dd3fc;margin:0 5px}
 @media(max-width:760px){.clk{width:100%}.clk .r1{justify-content:center}.clk .r2{text-align:center}header h1{flex:1 1 60%}}
 @media print{header,nav,.bar,.da,.hint,.noprint{display:none!important}body{background:#fff;color:#000}}
 </style>
@@ -296,12 +296,13 @@ function clkTick(){const ct=document.getElementById("ct");if(!ct)return;const n=
  let hh=n.getHours(),ap=hh>=12?"م":"ص";hh=hh%12||12;const p=x=>String(x).padStart(2,"0");
  ct.innerHTML="<small>"+ap+"</small>"+p(hh)+":"+p(n.getMinutes());
  document.getElementById("cdy").textContent=L({weekday:"long"},"gregory");
- document.getElementById("cg").innerHTML="<i>م</i>"+L({day:"numeric",month:"long",year:"numeric"},"gregory").replace(/\s*م$/,"");
+ document.getElementById("cg").innerHTML="<s>"+L({day:"numeric",month:"long",year:"numeric"},"gregory").replace(/\s*م$/,"")+"</s><i>م</i>";
  let hj=L({day:"numeric",month:"long",year:"numeric"},"islamic-umalqura").replace(/\s*هـ$/,"");if(!hj){const[y,m,d]=g2h(n);hj=d+"/"+m+"/"+y}
- document.getElementById("ch").innerHTML="<i>هـ</i>"+hj}
+ document.getElementById("ch").innerHTML="<s>"+hj+"</s><i>هـ</i>"}
 setInterval(clkTick,15000);
 
 function fitStats(){document.querySelectorAll(".stat").forEach(c=>{const b=c.querySelector("b");if(!b)return;b.style.fontSize="";let s=parseFloat(getComputedStyle(b).fontSize);const w=c.clientWidth-parseFloat(getComputedStyle(c).paddingLeft)-parseFloat(getComputedStyle(c).paddingRight);b.style.display="inline-block";while(b.scrollWidth>w&&s>11){s-=1;b.style.fontSize=s+"px"}b.style.display="block"})}
+new MutationObserver(()=>{requestAnimationFrame(fitStats)}).observe(document.getElementById("app"),{childList:true,subtree:true});if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>fitStats());
 window.addEventListener("resize",()=>{if(typeof tab!=="undefined"&&tab=="home")fitStats()});
 /* ---------- التحقق من آخر نسخة ---------- */
 const APP_VER=document.querySelector('meta[name="app-version"]').content;
