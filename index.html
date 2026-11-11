@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="3.3"><meta name="app-critical" content="0"><meta name="app-note" content="صيغة التواريخ يوم-شهر-سنة وإصلاح رحلات الفاتورة وسحب الفاتورة في سند القبض">
+<meta name="app-version" content="3.4"><meta name="app-critical" content="0"><meta name="app-note" content="توحيد صيغة التاريخ والوقت في كل الحقول والترويسة وتحسين مطابقة رحلات العميل">
 <title>برج السمو للنقليات</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#0a5a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="برج السمو">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@ header{flex-wrap:wrap}
 .clk .ct small{unicode-bidi:isolate;display:inline;opacity:1;font-size:1.05rem;font-weight:700;margin-inline-end:6px;color:#fde68a;font-family:"Reem Kufi",sans-serif;text-shadow:none}
 .clk .r2{font-size:.74rem;color:#e0f2fe;white-space:nowrap}.clk .r2 s{text-decoration:none;unicode-bidi:isolate}.clk .r2 i{unicode-bidi:isolate;font-style:normal;color:#7dd3fc;margin:0 2px}.clk .r2 u{text-decoration:none;color:#7dd3fc;margin:0 5px}
 @media(max-width:760px){.clk{width:100%}.clk .r1{justify-content:center}.clk .r2{text-align:center}header h1{flex:1 1 60%}}
-.dfw{display:flex;gap:6px;align-items:center;direction:ltr;position:relative}.dfw input[data-d]{flex:1;min-width:0;text-align:center;letter-spacing:1px}.dfw .dpk{padding:6px 10px}.dfw .dnat{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;inset-inline-end:0;bottom:0}
+.dtw{display:flex;gap:8px;align-items:center;direction:ltr;flex-wrap:wrap}.dtw .dfw{flex:1 1 120px}.dtw>.dfw:first-of-type{flex:2 1 170px}.dfw select{width:auto;min-width:58px}.dfw input[data-tm]{flex:none;width:92px}.dfw{display:flex;gap:6px;align-items:center;direction:ltr;position:relative}.dfw input[data-d]{flex:1;min-width:0;text-align:center;letter-spacing:1px}.dfw .dpk{padding:6px 10px}.dfw .dnat{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;inset-inline-end:0;bottom:0}
 @media print{header,nav,.bar,.da,.hint,.noprint{display:none!important}body{background:#fff;color:#000}}
 </style>
 </head>
@@ -78,7 +78,7 @@ const num=x=>+x||0;
 const n2=x=>(Math.round((+x||0)*100)/100).toLocaleString("en",{minimumFractionDigits:2,maximumFractionDigits:2});
 const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 function g2h(dt){const y=dt.getFullYear(),m=dt.getMonth()+1,d=dt.getDate(),a=Math.floor((14-m)/12),yy=y+4800-a,mm=m+12*a-3;const jd=d+Math.floor((153*mm+2)/5)+365*yy+Math.floor(yy/4)-Math.floor(yy/100)+Math.floor(yy/400)-32045;let l=jd-1948440+10632;const n=Math.floor((l-1)/10631);l=l-10631*n+354;const j=Math.floor((10985-l)/5316)*Math.floor((50*l)/17719)+Math.floor(l/5670)*Math.floor((43*l)/15238);l=l-Math.floor((30-j)/15)*Math.floor((17719*j)/50)-Math.floor(j/16)*Math.floor((15238*j)/43)+29;const hm=Math.floor((24*l)/709),hd=l-Math.floor((709*hm)/24),hy=30*n+j-30;return[hy,hm,hd]}
-const hijriStr=dt=>{const[y,m,d]=g2h(dt);return y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0")};
+const hijriStr=dt=>{try{const o={};new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn",{year:"numeric",month:"numeric",day:"numeric"}).formatToParts(dt).forEach(x=>o[x.type]=x.value);const s=(o.year||o.relatedYear)+"-"+String(o.month).padStart(2,"0")+"-"+String(o.day).padStart(2,"0");if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s}catch(e){}const[y,m,d]=g2h(dt);return y+"-"+String(m).padStart(2,"0")+"-"+String(d).padStart(2,"0")};
 const T1=["","واحد","اثنان","ثلاثة","أربعة","خمسة","ستة","سبعة","ثمانية","تسعة","عشرة","أحد عشر","اثنا عشر","ثلاثة عشر","أربعة عشر","خمسة عشر","ستة عشر","سبعة عشر","ثمانية عشر","تسعة عشر"],T10=["","","عشرون","ثلاثون","أربعون","خمسون","ستون","سبعون","ثمانون","تسعون"],T100=["","مائة","مئتان","ثلاثمائة","أربعمائة","خمسمائة","ستمائة","سبعمائة","ثمانمائة","تسعمائة"];
 function t999(n){const h=Math.floor(n/100),r=n%100,a=[];if(h)a.push(T100[h]);if(r){if(r<20)a.push(T1[r]);else{if(r%10)a.push(T1[r%10]);a.push(T10[Math.floor(r/10)])}}return a.join(" و")}
 function tgrp(n,s,d,p,t){if(n==1)return s;if(n==2)return d;if(n<=10)return t999(n)+" "+p;if(n%100==0)return(n==200?"مائتا":t999(n))+" "+s;return t999(n)+" "+t}
@@ -88,14 +88,27 @@ function h2g(y,m,d){const jd=Math.floor((11*y+3)/30)+354*y+30*m-Math.floor((m-1)
 function toDate(v){const[y,m,d]=String(v).slice(0,10).split("-").map(Number);return y<1700?h2g(y,m,d):new Date(y,m-1,d)}
 const hjt=v=>{const y=+String(v||"").slice(0,4);return y&&y<1700?"تاريخ هجري":""};
 
+
+const p2=x=>String(x).padStart(2,"0");
+function t12(hm){const m=/^(\d{1,2}):(\d{2})/.exec(hm||"");if(!m)return["",""];const h=+m[1];return[p2(h%12||12)+":"+m[2],h>=12?"م":"ص"]}
+const timeHtml=hm=>{const[t,ap]=t12(hm);return t?`<bdi dir="ltr"><span style="unicode-bidi:isolate">${ap}</span> ${t}</bdi>`:""};
+const tdfld=(kind,k,v)=>{const s=String(v||"");let d="",tm="";if(kind=="dt"){d=s.slice(0,10);tm=s.length>10?s.slice(11,16):""}else tm=s.length>=16?s.slice(11,16):(/^\d{1,2}:\d{2}$/.test(s)?s:"");
+ const[t,ap]=t12(tm),val=kind=="dt"?(d?d+"T"+(tm||"00:00"):""):tm;
+ return `<span class="dtw"><input type="hidden" data-k="${k}" data-t="${kind}" value="${esc(val)}">${kind=="dt"?dfld("",d):""}<span class="dfw"><select data-ap="1" onchange="dtSync(this)"><option ${ap!="م"?"selected":""}>ص</option><option ${ap=="م"?"selected":""}>م</option></select><input type="text" inputmode="numeric" dir="ltr" maxlength="5" placeholder="hh:mm" autocomplete="off" data-tm="1" value="${t}" oninput="tmask(this)"></span></span>`};
+window.tmask=el=>{const d=el.value.replace(/[^\d]/g,"").slice(0,4),o=d.length>2?d.slice(0,2)+":"+d.slice(2):d;if(el.value!==o)el.value=o;dtSync(el)};
+window.dtSync=el=>{const w=el.closest?el.closest(".dtw"):el;if(!w)return;const hid=w.querySelector('input[type=hidden]'),di=w.querySelector("[data-d]"),ti=w.querySelector("[data-tm]"),ap=w.querySelector("[data-ap]").value,m=/^(\d{1,2}):(\d{2})$/.exec(ti.value);
+ let t24="";if(m&&+m[2]<60&&+m[1]<24){const h=+m[1];t24=p2(h>12?h:(h%12)+(ap=="م"?12:0))+":"+m[2]}
+ hid.value=di?(DRE.test(di.value)?di.value+"T"+(t24||"00:00"):""):t24};
 /* حقل التاريخ: سنة-شهر-يوم (اليوم عند أقصى اليمين) مستقل عن لغة المتصفح */
 const DRE=/^\d{4}-\d{2}-\d{2}$/;
 const dfld=(attrs,v)=>`<span class="dfw"><input type="text" inputmode="numeric" dir="ltr" maxlength="10" placeholder="yyyy-mm-dd" autocomplete="off" ${attrs} data-d="1" value="${esc(v||"")}" oninput="dmask(this)"><button type="button" class="btn sec dpk" onclick="dpick(this)" title="اختيار من التقويم">📅</button><input type="date" class="dnat" tabindex="-1" onchange="dnat(this)"></span>`;
-window.dmask=el=>{let d=el.value.replace(/[^\d]/g,"").slice(0,8),o=d.slice(0,4);if(d.length>4)o+="-"+d.slice(4,6);if(d.length>6)o+="-"+d.slice(6,8);if(el.value!==o)el.value=o;hj(el)};
+window.dmask=el=>{let d=el.value.replace(/[^\d]/g,"").slice(0,8),o=d.slice(0,4);if(d.length>4)o+="-"+d.slice(4,6);if(d.length>6)o+="-"+d.slice(6,8);if(el.value!==o)el.value=o;hj(el);const k=el.dataset.k;if(k&&/HDate$/.test(k)&&document.activeElement===el)el.dataset.auto="0";
+ if(k&&/MDate$/.test(k)&&DRE.test(el.value)){const h2=document.querySelector('#df input[data-k="'+k.replace("MDate","HDate")+'"]');if(h2&&(h2.value===""||h2.dataset.auto==="1")){h2.value=hijriStr(new Date(el.value+"T00:00:00"));h2.dataset.auto="1";hj(h2)}}
+ const w=el.closest(".dtw");if(w)dtSync(w)};
 window.dpick=b=>{const n=b.nextElementSibling,t=b.previousElementSibling;n.value=DRE.test(t.value)&&+t.value.slice(0,4)>=1700?t.value:"";try{n.showPicker?n.showPicker():n.click()}catch(e){n.click()}};
 window.dnat=n=>{const t=n.previousElementSibling.previousElementSibling;if(!n.value)return;t.value=n.value;t.dispatchEvent(new Event("input",{bubbles:true}));t.dispatchEvent(new Event("change",{bubbles:true}))};
 window.dchg=(el,k,re)=>{const v=el.value;if(v&&!DRE.test(v)){alert("صيغة التاريخ: سنة-شهر-يوم، مثال 2026-11-09");return}ivSet(k,v,re)};
-function hj(el){const s=(el.closest(".dfw")||el).nextElementSibling;if(s)s.textContent=hjt(el.value)}
+function hj(el){const s=(el.closest(".dfw")||el).nextElementSibling;if(s&&s.classList.contains("hj"))s.textContent=hjt(el.value)}
 function fmtD(v){const s=String(v).slice(0,10),y=+s.slice(0,4);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const z="\u2066"+s+"\u2069";return y&&y<1700?z+" هـ":z}
 function cv(el){const t=el.dataset.t,v=el.value;if(t=="t")return "1899-12-30T"+v+":00";if(t=="dt")return v.endsWith("T00:00")?v.slice(0,10):v+":00";return v}
 
@@ -129,7 +142,7 @@ function home(){const al=[];[["cars","CarLicenXdate","استمارة السيا�
 function list(){const e=E[tab];$("main").innerHTML=`<div class="bar"><input id="q" placeholder="بحث في ${e.n}..." value="${esc(q)}" oninput="setQ(this.value)">${canW(tab)?'<button class="btn" onclick="edit(\'\')">+ إضافة</button>':""}</div><div class="wrap" id="tb"></div>`;rows()}
 function show(e,c,v,r){if(v==null||v==="")return"";const f=e.f.find(x=>x[0]==c),t=f&&f[2];
  if(t=="d"){const n=days(v);return fmtD(v)+(EXP.includes(c)?" "+(n<0?'<span class="tag t-bad">منتهي</span>':n<=60?`<span class="tag t-warn">${n} يوم</span>`:""):"")}
- if(t=="t")return esc(String(v).slice(11,16));if(t=="dt")return esc(String(v).replace("T"," ").replace(/ 00:00(:00)?$/,""));
+ if(t=="t")return timeHtml(String(v).slice(11,16));if(t=="dt"){const s=String(v),tm=s.slice(11,16);return fmtD(s.slice(0,10))+(tm&&tm!="00:00"?" "+timeHtml(tm):"")}
  if(t&&t[0]=="r"){const[,en,k,l]=t.split(":"),x=(S[en]||[]).find(y=>y[k]==v);return esc(x?(x[l]||v):(v=="0"?"":v))}
  if(tab=="invoices"&&c=="InvNo")return esc(v)+" "+(closedInv(r)?'<span class="tag t-ok">مقفلة</span>':'<span class="tag t-warn">مفتوحة</span>');return esc(v)}
 function rows(){const e=E[tab],k=e.key,d=(S[tab]||[]).filter(r=>!q||Object.values(r).some(v=>String(v).includes(q))).sort((a,b)=>k?String(a[k]).localeCompare(String(b[k]),"ar",{numeric:true}):String(b.ExpDate||"").localeCompare(String(a.ExpDate||"")));
@@ -138,13 +151,13 @@ const nextNo=t=>{if(!["trips","receipts","suppliers","customers","drivers"].incl
 window.edit=id=>{if(tab=="invoices")return invEdit(id);const e=E[tab],r=(S[tab]||[]).find(x=>x._id===id)||{};const{_id,updatedAt,updatedBy,...rec}=r;cur=rec;curId=id;if(!id&&e.key&&!cur[e.key])cur[e.key]=nextNo(tab);$("dt").textContent=(id?"تعديل - ":"إضافة - ")+e.n;
  $("df").innerHTML=e.f.map(([k,l,t])=>{if(t=="pe")return"";if(t=="p")return plateHTML();const v=cur[k]??"";let i;
   if(t=="d")i=dfld(`data-k="${k}"`,v)+`<small class="hj">${hjt(v)}</small>`;
-  else if(t=="t")i=`<input type="time" data-k="${k}" data-t="t" value="${esc(String(v).slice(11,16))}">`;
-  else if(t=="dt")i=`<input type="datetime-local" data-k="${k}" data-t="dt" value="${esc(v?(String(v).length==10?v+"T00:00":String(v).slice(0,16)):"")}">`;
+  else if(t=="t")i=tdfld("t",k,v);
+  else if(t=="dt")i=tdfld("dt",k,v);
   else if(t=="n")i=`<input type="number" step="any" data-k="${k}" value="${esc(v)}">`;
   else if(t&&t[0]=="s")i=`<select data-k="${k}"><option value=""></option>${[...new Set([...lkList(t.slice(2)),...(v?[v]:[])])].map(x=>`<option ${x==v?"selected":""}>${esc(x)}</option>`).join("")}</select>`;
   else if(t&&t[0]=="r"){const[,en,kk,ll]=t.split(":");i=`<select data-k="${k}"><option value=""></option>${(S[en]||[]).map(x=>`<option value="${esc(x[kk])}" ${x[kk]==v?"selected":""}>${esc(x[ll]||x[kk])}</option>`).join("")}</select>`}
   else i=`<input data-k="${k}" value="${esc(v)}">`;return`<div><label>${l}</label>${i}</div>`}).join("")+(id&&canDel()?'<div><label>&nbsp;</label><button class="btn del" onclick="del()">حذف السجل</button></div>':"")+(id?'<div><label>&nbsp;</label><button class="btn sec" onclick="attEdit()">📎 المرفقات</button></div>':"");
- if(tab=="cars")plateInit();if(tab=="receipts")rcSetup();$("dlg").showModal();if(tab=="cars"&&!cur.CarNo)setTimeout(()=>P("a","l")[0].focus(),60)};
+ if(tab=="cars")plateInit();if(tab=="receipts")rcSetup();document.querySelectorAll("#df input[data-k$=MDate]").forEach(m=>{if(DRE.test(m.value)){const h2=document.querySelector('#df input[data-k="'+m.dataset.k.replace("MDate","HDate")+'"]');if(h2&&h2.value===""){h2.value=hijriStr(new Date(m.value+"T00:00:00"));h2.dataset.auto="1";hj(h2)}}});$("dlg").showModal();if(tab=="cars"&&!cur.CarNo)setTimeout(()=>P("a","l")[0].focus(),60)};
 
 function rcSetup(){const sel=document.querySelector('#df select[data-k="SanadInv"]');if(!sel)return;
  const paid=n=>(S.receipts||[]).filter(r=>String(r.SanadInv)===String(n)&&r._id!==curId).reduce((s,r)=>s+num(r.SanadVol),0);
@@ -156,7 +169,8 @@ function rcSetup(){const sel=document.querySelector('#df select[data-k="SanadInv
   h.textContent="العميل: "+cn(i.InvCust)+" | الصافي "+n2(i.invnet)+" | المحصل سابقاً "+n2(p)+" | المتبقي "+n2(rem);
   if(fill&&vol&&(vol.value===""||vol.dataset.auto==="1")){vol.value=rem>0?rem:"";vol.dataset.auto="1"}};
  sel.addEventListener("change",()=>upd(true));upd(false)}
-window.save=async()=>{const e=E[tab];if(tab=="cars")platePack();const bd=[...document.querySelectorAll("#df [data-d]")].find(el=>el.value&&!DRE.test(el.value));if(bd){alert("صيغة التاريخ: سنة-شهر-يوم، مثال 2026-11-09");bd.focus();return}
+window.save=async()=>{const e=E[tab];if(tab=="cars")platePack();const bt=[...document.querySelectorAll("#df [data-tm]")].find(el=>el.value&&!/^\d{1,2}:\d{2}$/.test(el.value));if(bt){alert("صيغة الوقت: ساعة:دقيقة، مثال 08:30");bt.focus();return}
+ const bd=[...document.querySelectorAll("#df [data-d]")].find(el=>el.value&&!DRE.test(el.value));if(bd){alert("صيغة التاريخ: سنة-شهر-يوم، مثال 2026-11-09");bd.focus();return}
  document.querySelectorAll("#df [data-k]").forEach(el=>{el.value!==""?cur[el.dataset.k]=cv(el):delete cur[el.dataset.k]});
  let id;if(e.key){const key=String(cur[e.key]||"").trim();if(!key){alert("الحقل الأساسي مطلوب");return}cur[e.key]=key;id=idOf(key)}else id=curId||doc(collection(db,tab)).id;const ref=doc(db,tab,id);
  try{await runTransaction(db,async tx=>{const ex=await tx.get(ref);if(e.key){if(curId!==id&&ex.exists())throw new Error("هذا الرقم مسجل مسبقاً");if(curId&&curId!==id)tx.delete(doc(db,tab,curId))}tx.set(ref,{...cur,updatedAt:serverTimestamp(),updatedBy:ME.uid})});
@@ -194,12 +208,14 @@ let IV=null;
 const closedInv=i=>{const ls=(i&&i.lines)||[];return ls.length>0&&ls.every(no=>{const t=(S.trips||[]).find(x=>x._id===idOf(no));return t&&isInv(t)})};
 const nextInvNo=()=>{const n=(S.invoices||[]).map(r=>parseInt(r.InvNo)).filter(x=>!isNaN(x));return String((n.length?Math.max(...n):0)+1)};
 const isInv=t=>[true,"True","true","1","-1",1,-1].includes(t.ContInv);
-const custKeys=c=>{const x=(S.customers||[]).find(y=>String(y.CustNo)===String(c));return new Set([c,x&&x.CustNo,x&&x.CustName].filter(v=>v!=null&&v!=="").map(v=>String(v).trim().toLowerCase()))};
-const tripOf=(t,ks)=>ks.has(String(t.ContCust==null?"":t.ContCust).trim().toLowerCase());
+const nrm=s=>String(s==null?"":s).replace(/[ً-ٟـ]/g,"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/\s+/g," ").trim().toLowerCase();
+const custKeys=c=>{const x=(S.customers||[]).find(y=>String(y.CustNo)===String(c)),nm=x?nrm(x.CustName):"",ks=new Set([nrm(c)]);(S.customers||[]).forEach(y=>{if(String(y.CustNo)===String(c)||(nm&&nrm(y.CustName)===nm)){ks.add(nrm(y.CustNo));ks.add(nrm(y.CustName))}});ks.delete("");return ks};
+const tripOf=(t,ks)=>ks.has(nrm(t.ContCust));
 function tripsFor(c){if(!c)return[];const ks=custKeys(c);return(S.trips||[]).filter(t=>tripOf(t,ks)&&(IV.lines.has(t.ContNo)||(!isInv(t)&&!(S.invoices||[]).some(i=>i._id!==IV.origId&&(i.lines||[]).includes(t.ContNo)))))}
-function ivEmpty(c){const ks=custKeys(c),all=(S.trips||[]).filter(t=>tripOf(t,ks)),inv=all.filter(isInv).length,tot=(S.trips||[]).length;
- const un=(S.trips||[]).filter(t=>!isInv(t)),known=new Set((S.customers||[]).flatMap(x=>[x.CustNo,x.CustName]).map(v=>String(v==null?"":v).trim().toLowerCase())),odd=[...new Set(un.filter(t=>!known.has(String(t.ContCust==null?"":t.ContCust).trim().toLowerCase())).map(t=>t.ContCust||"(بدون عميل)"))];
- return "لا توجد رحلات غير مفوترة لهذا العميل"+(all.length?` (رحلاته ${all.length}، المفوترة منها ${inv})`:` (لا رحلات مسجلة باسمه من أصل ${tot})`)+(odd.length&&!all.length?`<br><small>رحلات غير مفوترة بعميل غير معروف: ${esc(odd.slice(0,6).join("، "))}</small>`:"")}
+function ivEmpty(c){const ks=custKeys(c),all=(S.trips||[]).filter(t=>tripOf(t,ks)),tot=(S.trips||[]).length,inv=all.filter(isInv).length;
+ const link=all.filter(t=>!isInv(t)).map(t=>{const i=(S.invoices||[]).find(i=>i._id!==IV.origId&&(i.lines||[]).map(String).includes(String(t.ContNo)));return i?"رحلة "+t.ContNo+" ← فاتورة "+i.InvNo:""}).filter(Boolean);
+ const known=new Set((S.customers||[]).flatMap(x=>[x.CustNo,x.CustName]).map(nrm)),odd=[...new Set((S.trips||[]).filter(t=>!isInv(t)&&!known.has(nrm(t.ContCust))).map(t=>t.ContCust||"(بدون عميل)"))];
+ return "لا توجد رحلات غير مفوترة لهذا العميل"+(all.length?` (رحلاته ${all.length}، المفوترة ${inv})`:` (لا رحلات مسجلة باسمه من أصل ${tot})`)+(link.length?`<br><small>مرتبطة بفواتير أخرى: ${esc(link.slice(0,6).join("، "))}</small>`:"")+(odd.length&&!all.length?`<br><small>رحلات غير مفوترة بعميل غير معروف: ${esc(odd.slice(0,6).join("، "))}</small>`:"")}
 function invEdit(id){const o=(S.invoices||[]).find(x=>x._id===id),{_id,updatedAt,updatedBy,lines,...rec}=o||{};const r=o?rec:{InvNo:nextInvNo(),InvMDate:ymd(new Date()),InvHDate:hijriStr(new Date())};
  IV={rec:r,orig:o||null,origId:o?o._id:"",lines:new Set(o?(o.lines||[]):[])};invDraw();$("idlg").showModal()}
 function calc(){const r=IV.rec,ts=tripsFor(r.InvCust).filter(t=>IV.lines.has(t.ContNo)),g=ts.reduce((s,t)=>s+num(t.ContVal)+num(t.ContMor),0),rat=num(r.InvDescRat),d=rat>0?Math.round(g*rat)/100:num(r.InvDescVal);
@@ -324,9 +340,9 @@ function clkTick(){const ct=document.getElementById("ct");if(!ct)return;const n=
  let hh=n.getHours(),ap=hh>=12?"م":"ص";hh=hh%12||12;const p=x=>String(x).padStart(2,"0");
  ct.innerHTML="<small>"+ap+"</small>"+p(hh)+":"+p(n.getMinutes());
  document.getElementById("cdy").textContent=L({weekday:"long"},"gregory");
- document.getElementById("cg").innerHTML="<s>"+L({day:"numeric",month:"long",year:"numeric"},"gregory").replace(/\s*م$/,"")+"</s><i>م</i>";
- let hj=L({day:"numeric",month:"long",year:"numeric"},"islamic-umalqura").replace(/\s*هـ$/,"");if(!hj){const[y,m,d]=g2h(n);hj=d+"/"+m+"/"+y}
- document.getElementById("ch").innerHTML="<s>"+hj+"</s><i>هـ</i>"}
+ document.getElementById("cg").innerHTML="<s dir='ltr'>"+ymd(n)+"</s><i>م</i>";
+ let hp;try{const o={};new Intl.DateTimeFormat("en-u-ca-islamic-umalqura-nu-latn",{year:"numeric",month:"numeric",day:"numeric"}).formatToParts(n).forEach(x=>o[x.type]=x.value);hp=(o.year||o.relatedYear)+"-"+p2(o.month)+"-"+p2(o.day);if(!/^\d{4}-\d{2}-\d{2}$/.test(hp))throw 0}catch(e){hp=hijriStr(n)}
+ document.getElementById("ch").innerHTML="<s dir='ltr'>"+hp+"</s><i>هـ</i>"}
 setInterval(clkTick,15000);
 
 function fitStats(){document.querySelectorAll(".stat").forEach(c=>{const b=c.querySelector("b");if(!b)return;b.style.fontSize="";let s=parseFloat(getComputedStyle(b).fontSize);const w=c.clientWidth-parseFloat(getComputedStyle(c).paddingLeft)-parseFloat(getComputedStyle(c).paddingRight);b.style.display="inline-block";while(b.scrollWidth>w&&s>11){s-=1;b.style.fontSize=s+"px"}b.style.display="block"})}
