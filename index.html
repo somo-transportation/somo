@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="3.5"><meta name="app-critical" content="0"><meta name="app-note" content="رابط مباشر لفتح الفاتورة التي تحجز رحلات العميل">
+<meta name="app-version" content="3.6"><meta name="app-critical" content="0"><meta name="app-note" content="إصلاح ظهور رحلة نقلت لعميل آخر بعد أن كانت في فاتورة مفتوحة">
 <title>برج السمو للنقليات</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#0a5a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="برج السمو">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
@@ -211,9 +211,10 @@ const isInv=t=>[true,"True","true","1","-1",1,-1].includes(t.ContInv);
 const nrm=s=>String(s==null?"":s).replace(/[ً-ٟـ]/g,"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/\s+/g," ").trim().toLowerCase();
 const custKeys=c=>{const x=(S.customers||[]).find(y=>String(y.CustNo)===String(c)),nm=x?nrm(x.CustName):"",ks=new Set([nrm(c)]);(S.customers||[]).forEach(y=>{if(String(y.CustNo)===String(c)||(nm&&nrm(y.CustName)===nm)){ks.add(nrm(y.CustNo));ks.add(nrm(y.CustName))}});ks.delete("");return ks};
 const tripOf=(t,ks)=>ks.has(nrm(t.ContCust));
-function tripsFor(c){if(!c)return[];const ks=custKeys(c);return(S.trips||[]).filter(t=>tripOf(t,ks)&&(IV.lines.has(t.ContNo)||(!isInv(t)&&!(S.invoices||[]).some(i=>i._id!==IV.origId&&(i.lines||[]).includes(t.ContNo)))))}
+const holder=t=>(S.invoices||[]).find(i=>i._id!==IV.origId&&(i.lines||[]).map(String).includes(String(t.ContNo))&&tripOf(t,custKeys(i.InvCust)));
+function tripsFor(c){if(!c)return[];const ks=custKeys(c);return(S.trips||[]).filter(t=>tripOf(t,ks)&&(IV.lines.has(t.ContNo)||(!isInv(t)&&!holder(t))))}
 function ivEmpty(c){const ks=custKeys(c),all=(S.trips||[]).filter(t=>tripOf(t,ks)),tot=(S.trips||[]).length,inv=all.filter(isInv).length;
- const link=all.filter(t=>!isInv(t)).map(t=>{const i=(S.invoices||[]).find(i=>i._id!==IV.origId&&(i.lines||[]).map(String).includes(String(t.ContNo)));return i?`رحلة ${esc(t.ContNo)} موجودة في <a href="#" onclick="invGo('${esc(i._id)}');return false" style="text-decoration:underline;font-weight:700">فاتورة ${esc(i.InvNo)}</a> (مفتوحة)`:""}).filter(Boolean);
+ const link=all.filter(t=>!isInv(t)).map(t=>{const i=holder(t);return i?`رحلة ${esc(t.ContNo)} موجودة في <a href="#" onclick="invGo('${esc(i._id)}');return false" style="text-decoration:underline;font-weight:700">فاتورة ${esc(i.InvNo)}</a> (مفتوحة)`:""}).filter(Boolean);
  const known=new Set((S.customers||[]).flatMap(x=>[x.CustNo,x.CustName]).map(nrm)),odd=[...new Set((S.trips||[]).filter(t=>!isInv(t)&&!known.has(nrm(t.ContCust))).map(t=>t.ContCust||"(بدون عميل)"))];
  return "لا توجد رحلات غير مفوترة لهذا العميل"+(all.length?` (رحلاته ${all.length}، المفوترة ${inv})`:` (لا رحلات مسجلة باسمه من أصل ${tot})`)+(link.length?`<br><small>${link.slice(0,6).join("، ")}<br>افتح تلك الفاتورة لتعديلها، أو احذفها لتعود الرحلة غير مفوترة.</small>`:"")+(odd.length&&!all.length?`<br><small>رحلات غير مفوترة بعميل غير معروف: ${esc(odd.slice(0,6).join("، "))}</small>`:"")}
 window.invGo=id=>invEdit(id);
@@ -245,6 +246,9 @@ async function invSave(close){const r=IV.rec;if(!r.InvNo){alert("رقم الفا
   const snap={};for(const no of new Set([...old,...lines]))snap[no]=await tx.get(doc(db,"trips",idOf(no)));
   if(IV.origId&&IV.origId!==id)tx.delete(doc(db,"invoices",IV.origId));
   tx.set(ref,{...r,lines,updatedAt:serverTimestamp(),updatedBy:ME.uid});
+  const ls=lines.map(String);for(const i of(S.invoices||[])){if(i._id===id||i._id===IV.origId||closedInv(i))continue;const rm=(i.lines||[]).filter(n=>ls.includes(String(n)));if(!rm.length)continue;const keep=(i.lines||[]).filter(n=>!ls.includes(String(n)));
+   const g=keep.reduce((s,n)=>{const t=(S.trips||[]).find(x=>String(x.ContNo)===String(n));return s+(t?num(t.ContVal)+num(t.ContMor):0)},0),rat=num(i.InvDescRat),d=rat>0?Math.round(g*rat)/100:num(i.InvDescVal);
+   tx.update(doc(db,"invoices",i._id),{lines:keep,InvVal:String(g),InvDescVal:String(d),invnet:String(Math.round((g-d)*100)/100),InvCurr:tafqeet(g-d)})}
   if(close!==null){const fl={};old.forEach(no=>fl[no]="False");lines.forEach(no=>fl[no]=close?"True":"False");for(const no of Object.keys(fl))if(snap[no].exists())tx.update(doc(db,"trips",idOf(no)),{ContInv:fl[no]})}});
   log(close===true?"إقفال فاتورة":close===false?"إعادة فتح فاتورة":"حفظ فاتورة","invoices",id);$("idlg").close()}catch(e){alert("تعذر حفظ الفاتورة:\n"+err(e))}}
 async function invDel(){if(!confirm("حذف الفاتورة نهائياً؟ ستعود رحلاتها غير مفوترة."))return;const old=(IV.orig&&IV.orig.lines)||[];
