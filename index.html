@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="3.4"><meta name="app-critical" content="0"><meta name="app-note" content="توحيد صيغة التاريخ والوقت في كل الحقول والترويسة وتحسين مطابقة رحلات العميل">
+<meta name="app-version" content="3.5"><meta name="app-critical" content="0"><meta name="app-note" content="رابط مباشر لفتح الفاتورة التي تحجز رحلات العميل">
 <title>برج السمو للنقليات</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#0a5a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="برج السمو">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
@@ -213,11 +213,12 @@ const custKeys=c=>{const x=(S.customers||[]).find(y=>String(y.CustNo)===String(c
 const tripOf=(t,ks)=>ks.has(nrm(t.ContCust));
 function tripsFor(c){if(!c)return[];const ks=custKeys(c);return(S.trips||[]).filter(t=>tripOf(t,ks)&&(IV.lines.has(t.ContNo)||(!isInv(t)&&!(S.invoices||[]).some(i=>i._id!==IV.origId&&(i.lines||[]).includes(t.ContNo)))))}
 function ivEmpty(c){const ks=custKeys(c),all=(S.trips||[]).filter(t=>tripOf(t,ks)),tot=(S.trips||[]).length,inv=all.filter(isInv).length;
- const link=all.filter(t=>!isInv(t)).map(t=>{const i=(S.invoices||[]).find(i=>i._id!==IV.origId&&(i.lines||[]).map(String).includes(String(t.ContNo)));return i?"رحلة "+t.ContNo+" ← فاتورة "+i.InvNo:""}).filter(Boolean);
+ const link=all.filter(t=>!isInv(t)).map(t=>{const i=(S.invoices||[]).find(i=>i._id!==IV.origId&&(i.lines||[]).map(String).includes(String(t.ContNo)));return i?`رحلة ${esc(t.ContNo)} موجودة في <a href="#" onclick="invGo('${esc(i._id)}');return false" style="text-decoration:underline;font-weight:700">فاتورة ${esc(i.InvNo)}</a> (مفتوحة)`:""}).filter(Boolean);
  const known=new Set((S.customers||[]).flatMap(x=>[x.CustNo,x.CustName]).map(nrm)),odd=[...new Set((S.trips||[]).filter(t=>!isInv(t)&&!known.has(nrm(t.ContCust))).map(t=>t.ContCust||"(بدون عميل)"))];
- return "لا توجد رحلات غير مفوترة لهذا العميل"+(all.length?` (رحلاته ${all.length}، المفوترة ${inv})`:` (لا رحلات مسجلة باسمه من أصل ${tot})`)+(link.length?`<br><small>مرتبطة بفواتير أخرى: ${esc(link.slice(0,6).join("، "))}</small>`:"")+(odd.length&&!all.length?`<br><small>رحلات غير مفوترة بعميل غير معروف: ${esc(odd.slice(0,6).join("، "))}</small>`:"")}
+ return "لا توجد رحلات غير مفوترة لهذا العميل"+(all.length?` (رحلاته ${all.length}، المفوترة ${inv})`:` (لا رحلات مسجلة باسمه من أصل ${tot})`)+(link.length?`<br><small>${link.slice(0,6).join("، ")}<br>افتح تلك الفاتورة لتعديلها، أو احذفها لتعود الرحلة غير مفوترة.</small>`:"")+(odd.length&&!all.length?`<br><small>رحلات غير مفوترة بعميل غير معروف: ${esc(odd.slice(0,6).join("، "))}</small>`:"")}
+window.invGo=id=>invEdit(id);
 function invEdit(id){const o=(S.invoices||[]).find(x=>x._id===id),{_id,updatedAt,updatedBy,lines,...rec}=o||{};const r=o?rec:{InvNo:nextInvNo(),InvMDate:ymd(new Date()),InvHDate:hijriStr(new Date())};
- IV={rec:r,orig:o||null,origId:o?o._id:"",lines:new Set(o?(o.lines||[]):[])};invDraw();$("idlg").showModal()}
+ IV={rec:r,orig:o||null,origId:o?o._id:"",lines:new Set(o?(o.lines||[]):[])};invDraw();if(!$("idlg").open)$("idlg").showModal()}
 function calc(){const r=IV.rec,ts=tripsFor(r.InvCust).filter(t=>IV.lines.has(t.ContNo)),g=ts.reduce((s,t)=>s+num(t.ContVal)+num(t.ContMor),0),rat=num(r.InvDescRat),d=rat>0?Math.round(g*rat)/100:num(r.InvDescVal);
  r.InvVal=String(g);r.InvDescVal=String(d);r.invnet=String(Math.round((g-d)*100)/100);r.InvCurr=tafqeet(g-d);return g}
 function ivSet(k,v,re){if(v==="")delete IV.rec[k];else IV.rec[k]=v;if(k=="InvMDate"&&v){IV.rec.InvHDate=hijriStr(new Date(v+"T00:00:00"))}if(re)invDraw()}
