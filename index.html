@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="3.6"><meta name="app-critical" content="0"><meta name="app-note" content="إصلاح ظهور رحلة نقلت لعميل آخر بعد أن كانت في فاتورة مفتوحة">
+<meta name="app-version" content="3.7"><meta name="app-critical" content="0"><meta name="app-note" content="سند القبض: رقم الشيك وتاريخه يظهران فقط عند اختيار الدفع بشيك، والبنك عند الشيك أو الشبكة">
 <title>برج السمو للنقليات</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#0a5a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="برج السمو">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
@@ -159,7 +159,9 @@ window.edit=id=>{if(tab=="invoices")return invEdit(id);const e=E[tab],r=(S[tab]|
   else i=`<input data-k="${k}" value="${esc(v)}">`;return`<div><label>${l}</label>${i}</div>`}).join("")+(id&&canDel()?'<div><label>&nbsp;</label><button class="btn del" onclick="del()">حذف السجل</button></div>':"")+(id?'<div><label>&nbsp;</label><button class="btn sec" onclick="attEdit()">📎 المرفقات</button></div>':"");
  if(tab=="cars")plateInit();if(tab=="receipts")rcSetup();document.querySelectorAll("#df input[data-k$=MDate]").forEach(m=>{if(DRE.test(m.value)){const h2=document.querySelector('#df input[data-k="'+m.dataset.k.replace("MDate","HDate")+'"]');if(h2&&h2.value===""){h2.value=hijriStr(new Date(m.value+"T00:00:00"));h2.dataset.auto="1";hj(h2)}}});$("dlg").showModal();if(tab=="cars"&&!cur.CarNo)setTimeout(()=>P("a","l")[0].focus(),60)};
 
-function rcSetup(){const sel=document.querySelector('#df select[data-k="SanadInv"]');if(!sel)return;
+function rcSetup(){const pm=document.querySelector('#df [data-k="SanadCash"]');if(pm){const w=k=>{const el=document.querySelector('#df [data-k="'+k+'"]');return el&&el.closest("#df > div")};
+ const sync=()=>{const v=pm.value,ch=v==="شيك",bk=ch||v==="شبكة";[["SanadCh",ch],["SanadChDate",ch],["SanadBank",bk]].forEach(([k,on])=>{const d=w(k);if(d)d.style.display=on?"":"none"})};pm.addEventListener("change",sync);sync()}
+ const sel=document.querySelector('#df select[data-k="SanadInv"]');if(!sel)return;
  const paid=n=>(S.receipts||[]).filter(r=>String(r.SanadInv)===String(n)&&r._id!==curId).reduce((s,r)=>s+num(r.SanadVol),0);
  const cn=c=>{const x=(S.customers||[]).find(y=>String(y.CustNo)===String(c));return x?x.CustName:(c||"")};
  const vol=document.querySelector('#df [data-k="SanadVol"]');if(vol)vol.addEventListener("input",()=>vol.dataset.auto="0");
@@ -171,7 +173,7 @@ function rcSetup(){const sel=document.querySelector('#df select[data-k="SanadInv
  sel.addEventListener("change",()=>upd(true));upd(false)}
 window.save=async()=>{const e=E[tab];if(tab=="cars")platePack();const bt=[...document.querySelectorAll("#df [data-tm]")].find(el=>el.value&&!/^\d{1,2}:\d{2}$/.test(el.value));if(bt){alert("صيغة الوقت: ساعة:دقيقة، مثال 08:30");bt.focus();return}
  const bd=[...document.querySelectorAll("#df [data-d]")].find(el=>el.value&&!DRE.test(el.value));if(bd){alert("صيغة التاريخ: سنة-شهر-يوم، مثال 2026-11-09");bd.focus();return}
- document.querySelectorAll("#df [data-k]").forEach(el=>{el.value!==""?cur[el.dataset.k]=cv(el):delete cur[el.dataset.k]});
+ document.querySelectorAll("#df [data-k]").forEach(el=>{el.value!==""?cur[el.dataset.k]=cv(el):delete cur[el.dataset.k]});if(tab=="receipts"){const m=cur.SanadCash;if(m!=="شيك"){delete cur.SanadCh;delete cur.SanadChDate}if(m!=="شيك"&&m!=="شبكة")delete cur.SanadBank}
  let id;if(e.key){const key=String(cur[e.key]||"").trim();if(!key){alert("الحقل الأساسي مطلوب");return}cur[e.key]=key;id=idOf(key)}else id=curId||doc(collection(db,tab)).id;const ref=doc(db,tab,id);
  try{await runTransaction(db,async tx=>{const ex=await tx.get(ref);if(e.key){if(curId!==id&&ex.exists())throw new Error("هذا الرقم مسجل مسبقاً");if(curId&&curId!==id)tx.delete(doc(db,tab,curId))}tx.set(ref,{...cur,updatedAt:serverTimestamp(),updatedBy:ME.uid})});
   log(curId?"تعديل":"إضافة",tab,id);$("dlg").close()}catch(x){alert("تعذر الحفظ: "+err(x))}};
