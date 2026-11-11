@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="app-version" content="3.2"><meta name="app-critical" content="0"><meta name="app-note" content="أيقونة التطبيق للشاشة الرئيسية">
+<meta name="app-version" content="3.3"><meta name="app-critical" content="0"><meta name="app-note" content="صيغة التواريخ يوم-شهر-سنة وإصلاح رحلات الفاتورة وسحب الفاتورة في سند القبض">
 <title>برج السمو للنقليات</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="theme-color" content="#0a5a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="برج السمو">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
@@ -47,6 +47,7 @@ header{flex-wrap:wrap}
 .clk .ct small{unicode-bidi:isolate;display:inline;opacity:1;font-size:1.05rem;font-weight:700;margin-inline-end:6px;color:#fde68a;font-family:"Reem Kufi",sans-serif;text-shadow:none}
 .clk .r2{font-size:.74rem;color:#e0f2fe;white-space:nowrap}.clk .r2 s{text-decoration:none;unicode-bidi:isolate}.clk .r2 i{unicode-bidi:isolate;font-style:normal;color:#7dd3fc;margin:0 2px}.clk .r2 u{text-decoration:none;color:#7dd3fc;margin:0 5px}
 @media(max-width:760px){.clk{width:100%}.clk .r1{justify-content:center}.clk .r2{text-align:center}header h1{flex:1 1 60%}}
+.dfw{display:flex;gap:6px;align-items:center;direction:ltr;position:relative}.dfw input[data-d]{flex:1;min-width:0;text-align:center;letter-spacing:1px}.dfw .dpk{padding:6px 10px}.dfw .dnat{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;inset-inline-end:0;bottom:0}
 @media print{header,nav,.bar,.da,.hint,.noprint{display:none!important}body{background:#fff;color:#000}}
 </style>
 </head>
@@ -86,8 +87,16 @@ function tafqeet(x){x=Math.round((+x||0)*100)/100;if(x<=0)return"";const ri=Math
 function h2g(y,m,d){const jd=Math.floor((11*y+3)/30)+354*y+30*m-Math.floor((m-1)/2)+d+1948440-385;let l=jd+68569;const n=Math.floor(4*l/146097);l=l-Math.floor((146097*n+3)/4);const i=Math.floor(4000*(l+1)/1461001);l=l-Math.floor(1461*i/4)+31;const j=Math.floor(80*l/2447);const day=l-Math.floor(2447*j/80);l=Math.floor(j/11);return new Date(100*(n-49)+i+l,j+2-12*l-1,day)}
 function toDate(v){const[y,m,d]=String(v).slice(0,10).split("-").map(Number);return y<1700?h2g(y,m,d):new Date(y,m-1,d)}
 const hjt=v=>{const y=+String(v||"").slice(0,4);return y&&y<1700?"تاريخ هجري":""};
-function hj(el){el.nextElementSibling.textContent=hjt(el.value)}
-function fmtD(v){const s=String(v).slice(0,10),y=+s.slice(0,4);return y&&y<1700?s.replace(/-/g,"/")+" هـ":s}
+
+/* حقل التاريخ: سنة-شهر-يوم (اليوم عند أقصى اليمين) مستقل عن لغة المتصفح */
+const DRE=/^\d{4}-\d{2}-\d{2}$/;
+const dfld=(attrs,v)=>`<span class="dfw"><input type="text" inputmode="numeric" dir="ltr" maxlength="10" placeholder="yyyy-mm-dd" autocomplete="off" ${attrs} data-d="1" value="${esc(v||"")}" oninput="dmask(this)"><button type="button" class="btn sec dpk" onclick="dpick(this)" title="اختيار من التقويم">📅</button><input type="date" class="dnat" tabindex="-1" onchange="dnat(this)"></span>`;
+window.dmask=el=>{let d=el.value.replace(/[^\d]/g,"").slice(0,8),o=d.slice(0,4);if(d.length>4)o+="-"+d.slice(4,6);if(d.length>6)o+="-"+d.slice(6,8);if(el.value!==o)el.value=o;hj(el)};
+window.dpick=b=>{const n=b.nextElementSibling,t=b.previousElementSibling;n.value=DRE.test(t.value)&&+t.value.slice(0,4)>=1700?t.value:"";try{n.showPicker?n.showPicker():n.click()}catch(e){n.click()}};
+window.dnat=n=>{const t=n.previousElementSibling.previousElementSibling;if(!n.value)return;t.value=n.value;t.dispatchEvent(new Event("input",{bubbles:true}));t.dispatchEvent(new Event("change",{bubbles:true}))};
+window.dchg=(el,k,re)=>{const v=el.value;if(v&&!DRE.test(v)){alert("صيغة التاريخ: سنة-شهر-يوم، مثال 2026-11-09");return}ivSet(k,v,re)};
+function hj(el){const s=(el.closest(".dfw")||el).nextElementSibling;if(s)s.textContent=hjt(el.value)}
+function fmtD(v){const s=String(v).slice(0,10),y=+s.slice(0,4);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const z="\u2066"+s+"\u2069";return y&&y<1700?z+" هـ":z}
 function cv(el){const t=el.dataset.t,v=el.value;if(t=="t")return "1899-12-30T"+v+":00";if(t=="dt")return v.endsWith("T00:00")?v.slice(0,10):v+":00";return v}
 
 const days=v=>Math.round((toDate(v)-new Date(new Date().toDateString()))/864e5);
@@ -128,15 +137,27 @@ function rows(){const e=E[tab],k=e.key,d=(S[tab]||[]).filter(r=>!q||Object.value
 const nextNo=t=>{if(!["trips","receipts","suppliers","customers","drivers"].includes(t))return"";const n=(S[t]||[]).map(r=>parseInt(r[E[t].key])).filter(x=>!isNaN(x));return String((n.length?Math.max(...n):0)+1)};
 window.edit=id=>{if(tab=="invoices")return invEdit(id);const e=E[tab],r=(S[tab]||[]).find(x=>x._id===id)||{};const{_id,updatedAt,updatedBy,...rec}=r;cur=rec;curId=id;if(!id&&e.key&&!cur[e.key])cur[e.key]=nextNo(tab);$("dt").textContent=(id?"تعديل - ":"إضافة - ")+e.n;
  $("df").innerHTML=e.f.map(([k,l,t])=>{if(t=="pe")return"";if(t=="p")return plateHTML();const v=cur[k]??"";let i;
-  if(t=="d")i=`<input type="date" data-k="${k}" value="${esc(v)}" oninput="hj(this)"><small class="hj">${hjt(v)}</small>`;
+  if(t=="d")i=dfld(`data-k="${k}"`,v)+`<small class="hj">${hjt(v)}</small>`;
   else if(t=="t")i=`<input type="time" data-k="${k}" data-t="t" value="${esc(String(v).slice(11,16))}">`;
   else if(t=="dt")i=`<input type="datetime-local" data-k="${k}" data-t="dt" value="${esc(v?(String(v).length==10?v+"T00:00":String(v).slice(0,16)):"")}">`;
   else if(t=="n")i=`<input type="number" step="any" data-k="${k}" value="${esc(v)}">`;
   else if(t&&t[0]=="s")i=`<select data-k="${k}"><option value=""></option>${[...new Set([...lkList(t.slice(2)),...(v?[v]:[])])].map(x=>`<option ${x==v?"selected":""}>${esc(x)}</option>`).join("")}</select>`;
   else if(t&&t[0]=="r"){const[,en,kk,ll]=t.split(":");i=`<select data-k="${k}"><option value=""></option>${(S[en]||[]).map(x=>`<option value="${esc(x[kk])}" ${x[kk]==v?"selected":""}>${esc(x[ll]||x[kk])}</option>`).join("")}</select>`}
   else i=`<input data-k="${k}" value="${esc(v)}">`;return`<div><label>${l}</label>${i}</div>`}).join("")+(id&&canDel()?'<div><label>&nbsp;</label><button class="btn del" onclick="del()">حذف السجل</button></div>':"")+(id?'<div><label>&nbsp;</label><button class="btn sec" onclick="attEdit()">📎 المرفقات</button></div>':"");
- if(tab=="cars")plateInit();$("dlg").showModal();if(tab=="cars"&&!cur.CarNo)setTimeout(()=>P("a","l")[0].focus(),60)};
-window.save=async()=>{const e=E[tab];if(tab=="cars")platePack();document.querySelectorAll("#df [data-k]").forEach(el=>{el.value!==""?cur[el.dataset.k]=cv(el):delete cur[el.dataset.k]});
+ if(tab=="cars")plateInit();if(tab=="receipts")rcSetup();$("dlg").showModal();if(tab=="cars"&&!cur.CarNo)setTimeout(()=>P("a","l")[0].focus(),60)};
+
+function rcSetup(){const sel=document.querySelector('#df select[data-k="SanadInv"]');if(!sel)return;
+ const paid=n=>(S.receipts||[]).filter(r=>String(r.SanadInv)===String(n)&&r._id!==curId).reduce((s,r)=>s+num(r.SanadVol),0);
+ const cn=c=>{const x=(S.customers||[]).find(y=>String(y.CustNo)===String(c));return x?x.CustName:(c||"")};
+ const vol=document.querySelector('#df [data-k="SanadVol"]');if(vol)vol.addEventListener("input",()=>vol.dataset.auto="0");
+ [...sel.options].forEach(o=>{if(!o.value)return;const i=(S.invoices||[]).find(x=>String(x.InvNo)===o.value);if(!i)return;const rem=num(i.invnet)-paid(o.value);o.textContent=o.value+" — "+cn(i.InvCust)+" — الصافي "+n2(i.invnet)+(rem<=0.005?" (مسددة)":" — المتبقي "+n2(rem))});
+ const h=document.createElement("small");h.className="hj";h.style.display="block";sel.parentNode.appendChild(h);
+ const upd=fill=>{const i=(S.invoices||[]).find(x=>String(x.InvNo)===sel.value);if(!i){h.textContent="";return}const p=paid(sel.value),rem=Math.round((num(i.invnet)-p)*100)/100;
+  h.textContent="العميل: "+cn(i.InvCust)+" | الصافي "+n2(i.invnet)+" | المحصل سابقاً "+n2(p)+" | المتبقي "+n2(rem);
+  if(fill&&vol&&(vol.value===""||vol.dataset.auto==="1")){vol.value=rem>0?rem:"";vol.dataset.auto="1"}};
+ sel.addEventListener("change",()=>upd(true));upd(false)}
+window.save=async()=>{const e=E[tab];if(tab=="cars")platePack();const bd=[...document.querySelectorAll("#df [data-d]")].find(el=>el.value&&!DRE.test(el.value));if(bd){alert("صيغة التاريخ: سنة-شهر-يوم، مثال 2026-11-09");bd.focus();return}
+ document.querySelectorAll("#df [data-k]").forEach(el=>{el.value!==""?cur[el.dataset.k]=cv(el):delete cur[el.dataset.k]});
  let id;if(e.key){const key=String(cur[e.key]||"").trim();if(!key){alert("الحقل الأساسي مطلوب");return}cur[e.key]=key;id=idOf(key)}else id=curId||doc(collection(db,tab)).id;const ref=doc(db,tab,id);
  try{await runTransaction(db,async tx=>{const ex=await tx.get(ref);if(e.key){if(curId!==id&&ex.exists())throw new Error("هذا الرقم مسجل مسبقاً");if(curId&&curId!==id)tx.delete(doc(db,tab,curId))}tx.set(ref,{...cur,updatedAt:serverTimestamp(),updatedBy:ME.uid})});
   log(curId?"تعديل":"إضافة",tab,id);$("dlg").close()}catch(x){alert("تعذر الحفظ: "+err(x))}};
@@ -170,9 +191,15 @@ function platePack(){const aL=P("a","l").map(x=>x.value).filter(Boolean),ad=P("a
  if(eL.length||ed)cur.CarEno=(ed+" "+eL.join("")).trim()}
 
 let IV=null;
-const closedInv=i=>{const ls=(i&&i.lines)||[];return ls.length>0&&ls.every(no=>{const t=(S.trips||[]).find(x=>x._id===idOf(no));return t&&t.ContInv=="True"})};
+const closedInv=i=>{const ls=(i&&i.lines)||[];return ls.length>0&&ls.every(no=>{const t=(S.trips||[]).find(x=>x._id===idOf(no));return t&&isInv(t)})};
 const nextInvNo=()=>{const n=(S.invoices||[]).map(r=>parseInt(r.InvNo)).filter(x=>!isNaN(x));return String((n.length?Math.max(...n):0)+1)};
-function tripsFor(c){if(!c)return[];return(S.trips||[]).filter(t=>t.ContCust==c&&(IV.lines.has(t.ContNo)||(t.ContInv!="True"&&!(S.invoices||[]).some(i=>i._id!==IV.origId&&(i.lines||[]).includes(t.ContNo)))))}
+const isInv=t=>[true,"True","true","1","-1",1,-1].includes(t.ContInv);
+const custKeys=c=>{const x=(S.customers||[]).find(y=>String(y.CustNo)===String(c));return new Set([c,x&&x.CustNo,x&&x.CustName].filter(v=>v!=null&&v!=="").map(v=>String(v).trim().toLowerCase()))};
+const tripOf=(t,ks)=>ks.has(String(t.ContCust==null?"":t.ContCust).trim().toLowerCase());
+function tripsFor(c){if(!c)return[];const ks=custKeys(c);return(S.trips||[]).filter(t=>tripOf(t,ks)&&(IV.lines.has(t.ContNo)||(!isInv(t)&&!(S.invoices||[]).some(i=>i._id!==IV.origId&&(i.lines||[]).includes(t.ContNo)))))}
+function ivEmpty(c){const ks=custKeys(c),all=(S.trips||[]).filter(t=>tripOf(t,ks)),inv=all.filter(isInv).length,tot=(S.trips||[]).length;
+ const un=(S.trips||[]).filter(t=>!isInv(t)),known=new Set((S.customers||[]).flatMap(x=>[x.CustNo,x.CustName]).map(v=>String(v==null?"":v).trim().toLowerCase())),odd=[...new Set(un.filter(t=>!known.has(String(t.ContCust==null?"":t.ContCust).trim().toLowerCase())).map(t=>t.ContCust||"(بدون عميل)"))];
+ return "لا توجد رحلات غير مفوترة لهذا العميل"+(all.length?` (رحلاته ${all.length}، المفوترة منها ${inv})`:` (لا رحلات مسجلة باسمه من أصل ${tot})`)+(odd.length&&!all.length?`<br><small>رحلات غير مفوترة بعميل غير معروف: ${esc(odd.slice(0,6).join("، "))}</small>`:"")}
 function invEdit(id){const o=(S.invoices||[]).find(x=>x._id===id),{_id,updatedAt,updatedBy,lines,...rec}=o||{};const r=o?rec:{InvNo:nextInvNo(),InvMDate:ymd(new Date()),InvHDate:hijriStr(new Date())};
  IV={rec:r,orig:o||null,origId:o?o._id:"",lines:new Set(o?(o.lines||[]):[])};invDraw();$("idlg").showModal()}
 function calc(){const r=IV.rec,ts=tripsFor(r.InvCust).filter(t=>IV.lines.has(t.ContNo)),g=ts.reduce((s,t)=>s+num(t.ContVal)+num(t.ContMor),0),rat=num(r.InvDescRat),d=rat>0?Math.round(g*rat)/100:num(r.InvDescVal);
@@ -183,13 +210,13 @@ function ivTog(no,on){on?IV.lines.add(no):IV.lines.delete(no);invDraw()}
 function invDraw(){const r=IV.rec,ts=tripsFor(r.InvCust),g=calc(),closed=!!IV.orig&&closedInv(IV.orig);
  $("idt").textContent="فاتورة "+(r.InvNo||"")+(closed?" (مقفلة)":"");
  $("ib").innerHTML=`<div><label>رقم الفاتورة</label><input value="${esc(r.InvNo||"")}" onchange="ivSet('InvNo',this.value)"></div>
-<div><label>التاريخ الميلادي</label><input type="date" value="${esc(r.InvMDate||"")}" onchange="ivSet('InvMDate',this.value,1)"></div>
-<div><label>التاريخ الهجري</label><input type="date" value="${esc(r.InvHDate||"")}" onchange="ivSet('InvHDate',this.value,1)"><small class="hj">${hjt(r.InvHDate)}</small></div>
+<div><label>التاريخ الميلادي</label>${dfld(`onchange="dchg(this,'InvMDate',1)"`,r.InvMDate)}</div>
+<div><label>التاريخ الهجري</label>${dfld(`onchange="dchg(this,'InvHDate',1)"`,r.InvHDate)}<small class="hj">${hjt(r.InvHDate)}</small></div>
 <div><label>العميل</label><select onchange="ivCust(this.value)"><option value=""></option>${S.customers.map(c=>`<option value="${esc(c.CustNo)}" ${c.CustNo==r.InvCust?"selected":""}>${esc(c.CustName||c.CustNo)}</option>`).join("")}</select></div>
 <div><label>نسبة الخصم %</label><input type="number" step="any" value="${esc(r.InvDescRat||"")}" onchange="ivSet('InvDescRat',this.value,1)"></div>
 <div><label>قيمة الخصم</label><input type="number" step="any" value="${esc(r.InvDescVal||"")}" ${num(r.InvDescRat)>0?"disabled":""} onchange="ivSet('InvDescVal',this.value,1)"></div>
 <div style="grid-column:1/-1"><label>ملاحظات</label><input value="${esc(r.InvRem||"")}" onchange="ivSet('InvRem',this.value)"></div>
-<div style="grid-column:1/-1" class="wrap"><table><tr><th></th><th>رقم الرحلة</th><th>التاريخ</th><th>من - إلى</th><th>السيارة</th><th>القيمة</th><th>أخرى</th><th>الإجمالي</th></tr>${ts.map(t=>`<tr><td><input type="checkbox" style="width:auto" ${IV.lines.has(t.ContNo)?"checked":""} ${closed?"disabled":""} onchange="ivTog('${esc(t.ContNo)}',this.checked)"></td><td>${esc(t.ContNo)}</td><td>${fmtD(t.ContMDate||"")}</td><td>${esc((t.ContFrom||"")+" - "+(t.ContTo||""))}</td><td>${esc(t.ContCar||"")}</td><td>${n2(t.ContVal)}</td><td>${n2(t.ContMor)}</td><td>${n2(num(t.ContVal)+num(t.ContMor))}</td></tr>`).join("")||`<tr><td colspan="8" class="empty">${r.InvCust?"لا توجد رحلات غير مفوترة لهذا العميل":"اختر العميل أولاً"}</td></tr>`}</table></div>
+<div style="grid-column:1/-1" class="wrap"><table><tr><th></th><th>رقم الرحلة</th><th>التاريخ</th><th>من - إلى</th><th>السيارة</th><th>القيمة</th><th>أخرى</th><th>الإجمالي</th></tr>${ts.map(t=>`<tr><td><input type="checkbox" style="width:auto" ${IV.lines.has(t.ContNo)?"checked":""} ${closed?"disabled":""} onchange="ivTog('${esc(t.ContNo)}',this.checked)"></td><td>${esc(t.ContNo)}</td><td>${fmtD(t.ContMDate||"")}</td><td>${esc((t.ContFrom||"")+" - "+(t.ContTo||""))}</td><td>${esc(t.ContCar||"")}</td><td>${n2(t.ContVal)}</td><td>${n2(t.ContMor)}</td><td>${n2(num(t.ContVal)+num(t.ContMor))}</td></tr>`).join("")||`<tr><td colspan="8" class="empty">${r.InvCust?ivEmpty(r.InvCust):"اختر العميل أولاً"}</td></tr>`}</table></div>
 <div style="grid-column:1/-1" class="card"><b>قيمة الفاتورة:</b> ${n2(g)} &nbsp; <b>الخصم:</b> ${n2(r.InvDescVal)} &nbsp; <b>الصافي:</b> ${n2(r.invnet)}<div style="margin-top:6px">${esc(r.InvCurr||"")}</div></div>`;
  $("ia").innerHTML=(IV.orig?`<button class="btn sec" onclick="attInv()">📎 المرفقات</button>`:"")+`<button class="btn" onclick="invSave(null)">حفظ</button>${closed?`<button class="btn sec" onclick="invSave(false)">إعادة فتح</button>`:`<button class="btn" style="background:var(--gold)" onclick="invSave(true)">إقفال الفاتورة</button>`}<button class="btn sec" onclick="invPrint()">طباعة</button>${IV.orig?`<button class="btn del" onclick="invDel()">حذف</button>`:""}<button class="btn sec" onclick="idlg.close()">إغلاق</button>`}
 
@@ -225,8 +252,8 @@ const tripFilt=t=>inR(t.ContMDate,F.from,F.to)&&(!F.cust||t.ContCust==F.cust)&&(
 const expFilt=e=>inR(e.ExpDate,F.from,F.to)&&(!F.type||e.ExpName==F.type)&&(!F.car||e.ExpCar==F.car)&&(!F.driv||e.ExpDriv==F.driv);
 const expiry=(list,fields,nameK,title)=>{const lim=num(F.dd)||60,rows=[];list.forEach(x=>fields.forEach(([k,l])=>{const d=days(x[k]);if(x[k]&&d!=null&&d<=lim)rows.push([d,x[nameK]||"",l,fmtD(x[k]),d<0?"منتهي منذ "+(-d)+" يوم":"بعد "+d+" يوم"])}));rows.sort((a,b)=>a[0]-b[0]);return{cols:[title,"البند","تاريخ الانتهاء","الحالة"],rows:rows.map(r=>r.slice(1))}};
 const RP={
-trips:{n:"الرحلات خلال فترة",f:["from","to","cust","car","driv"],run:()=>({cols:[...TC,"مفوترة"],rows:(S.trips||[]).filter(tripFilt).map(t=>[...tripRow(t),t.ContInv=="True"?"نعم":"لا"]),sum:[6,7,8]})},
-untrips:{n:"الرحلات غير المفوترة",f:["from","to","cust"],run:()=>({cols:TC,rows:(S.trips||[]).filter(t=>t.ContInv!="True"&&tripFilt(t)).map(tripRow),sum:[6,7,8]})},
+trips:{n:"الرحلات خلال فترة",f:["from","to","cust","car","driv"],run:()=>({cols:[...TC,"مفوترة"],rows:(S.trips||[]).filter(tripFilt).map(t=>[...tripRow(t),isInv(t)?"نعم":"لا"]),sum:[6,7,8]})},
+untrips:{n:"الرحلات غير المفوترة",f:["from","to","cust"],run:()=>({cols:TC,rows:(S.trips||[]).filter(t=>!isInv(t)&&tripFilt(t)).map(tripRow),sum:[6,7,8]})},
 cars:{n:"بيان بالسيارات",f:[],run:()=>({cols:["رقم اللوحة","اللوحة بالإنجليزي","الماركة","النوع","الموديل","اللون","الحمولة","انتهاء الاستمارة","انتهاء التأمين"],rows:S.cars.map(c=>[c.CarNo,c.CarEno||"",c.CarMake||"",c.CarType||"",c.CarModel||"",c.CarColor||"",c.CarWhit||"",fmtD(c.CarLicenXdate||""),fmtD(c.CarInsuXDate||"")])})},
 carsExp:{n:"سيارات منتهية أو قريبة الانتهاء (استمارة / تأمين)",f:["dd"],run:()=>expiry(S.cars,[["CarLicenXdate","الاستمارة"],["CarInsuXDate","التأمين"]],"CarNo","السيارة")},
 carInc:{n:"إيرادات ومصروفات السيارات",f:["from","to","car"],run:()=>{const m={};S.cars.forEach(c=>{if(!F.car||c.CarNo==F.car)m[c.CarNo]=[c.CarNo,0,0,0,0]});(S.trips||[]).filter(tripFilt).forEach(t=>{const r=m[t.ContCar];if(r){r[1]++;r[2]+=tripTot(t)}});(S.expenses||[]).filter(expFilt).forEach(e=>{const r=m[e.ExpCar];if(r){r[3]+=num(e.ExpValM);r[4]+=num(e.ExpValD)}});return{cols:["السيارة","عدد الرحلات","إيراد الرحلات","مصروفات (مدين)","مصروفات (دائن)"],rows:Object.values(m).filter(r=>r[1]||r[3]||r[4]),sum:[1,2,3,4],int:[1]}}},
@@ -240,7 +267,7 @@ custBal:{n:"أرصدة العملاء (الفواتير والمحصّل)",f:["f
 };
 /*RP_END*/
 function reportsPage(){const r=RP[RPK],opt=(arr,k,l,v)=>'<option value=""></option>'+arr.map(x=>`<option value="${esc(x[k])}" ${x[k]==v?"selected":""}>${esc(x[l]||x[k])}</option>`).join(""),
- fld={from:`<div><label>من تاريخ</label><input type="date" id="rf_from" value="${esc(F.from||"")}"></div>`,to:`<div><label>إلى تاريخ</label><input type="date" id="rf_to" value="${esc(F.to||"")}"></div>`,
+ fld={from:`<div><label>من تاريخ</label>${dfld(`id="rf_from"`,F.from)}</div>`,to:`<div><label>إلى تاريخ</label>${dfld(`id="rf_to"`,F.to)}</div>`,
  cust:`<div><label>العميل</label><select id="rf_cust">${opt(S.customers,"CustNo","CustName",F.cust)}</select></div>`,car:`<div><label>السيارة</label><select id="rf_car">${opt(S.cars,"CarNo","CarNo",F.car)}</select></div>`,
  driv:`<div><label>السائق</label><select id="rf_driv">${opt(S.drivers,"DrivNo","DrivName",F.driv)}</select></div>`,type:`<div><label>المصروف</label><select id="rf_type"><option value=""></option>${lkList("expType").map(x=>`<option ${x==F.type?"selected":""}>${esc(x)}</option>`).join("")}</select></div>`,
  dd:`<div><label>خلال (يوم)</label><input type="number" id="rf_dd" value="${esc(F.dd||60)}"></div>`};
